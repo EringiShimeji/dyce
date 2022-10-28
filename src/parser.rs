@@ -1,7 +1,8 @@
 use crate::{
-    ast::{BinaryExprKind, IntegerType, Node},
+    ast::{BinaryExprKind, Node},
     lexer::Lexer,
     token::{Token, TokenKind},
+    IntegerType,
 };
 
 pub struct Parser {
@@ -56,32 +57,32 @@ impl Parser {
         Ok(token)
     }
 
-    pub fn parse(&mut self) -> Result<Node, ()> {
+    pub fn parse(&mut self) -> Result<Box<Node>, ()> {
         self.expr()
     }
 
     // expr = add
-    fn expr(&mut self) -> Result<Node, ()> {
+    fn expr(&mut self) -> Result<Box<Node>, ()> {
         self.add()
     }
 
     // add = mul ( "+" mul | "-" mul )*
-    fn add(&mut self) -> Result<Node, ()> {
+    fn add(&mut self) -> Result<Box<Node>, ()> {
         let mut node = self.mul()?;
 
         loop {
             if self.consume(TokenKind::Plus).is_some() {
-                node = Node::BinaryExpr {
+                node = Box::new(Node::BinaryExpr {
                     kind: BinaryExprKind::Add,
-                    lhs: Box::new(node),
-                    rhs: Box::new(self.mul()?),
-                }
+                    lhs: node,
+                    rhs: self.mul()?,
+                })
             } else if self.consume(TokenKind::Minus).is_some() {
-                node = Node::BinaryExpr {
+                node = Box::new(Node::BinaryExpr {
                     kind: BinaryExprKind::Sub,
-                    lhs: Box::new(node),
-                    rhs: Box::new(self.mul()?),
-                }
+                    lhs: node,
+                    rhs: self.mul()?,
+                })
             } else {
                 return Ok(node);
             }
@@ -89,22 +90,22 @@ impl Parser {
     }
 
     // mul = primary ( "*" primary | "/" primary )*
-    fn mul(&mut self) -> Result<Node, ()> {
+    fn mul(&mut self) -> Result<Box<Node>, ()> {
         let mut node = self.primary()?;
 
         loop {
             if self.consume(TokenKind::Asterisk).is_some() {
-                node = Node::BinaryExpr {
+                node = Box::new(Node::BinaryExpr {
                     kind: BinaryExprKind::Mul,
-                    lhs: Box::new(node),
-                    rhs: Box::new(self.primary()?),
-                }
+                    lhs: node,
+                    rhs: self.primary()?,
+                })
             } else if self.consume(TokenKind::Slash).is_some() {
-                node = Node::BinaryExpr {
+                node = Box::new(Node::BinaryExpr {
                     kind: BinaryExprKind::Div,
-                    lhs: Box::new(node),
-                    rhs: Box::new(self.primary()?),
-                }
+                    lhs: node,
+                    rhs: self.primary()?,
+                })
             } else {
                 return Ok(node);
             }
@@ -112,7 +113,7 @@ impl Parser {
     }
 
     // primary = number | "(" expr ")"
-    fn primary(&mut self) -> Result<Node, ()> {
+    fn primary(&mut self) -> Result<Box<Node>, ()> {
         if self.consume(TokenKind::LParen).is_some() {
             let node = self.expr()?;
 
@@ -121,12 +122,12 @@ impl Parser {
             return Ok(node);
         }
 
-        Ok(Node::Integer(
+        Ok(Box::new(Node::Integer(
             self.expect(TokenKind::Number)?
                 .literal()
                 .parse::<IntegerType>()
                 .or(Err(()))?,
-        ))
+        )))
     }
 }
 
@@ -144,7 +145,7 @@ mod test {
 
             assert_eq!(
                 parser.parse().unwrap(),
-                Node::Integer(input.parse::<IntegerType>().unwrap())
+                Box::new(Node::Integer(input.parse::<IntegerType>().unwrap()))
             )
         }
     }
@@ -218,7 +219,7 @@ mod test {
             let lexer = Lexer::new(input.to_string());
             let mut parser = Parser::new(lexer);
 
-            assert_eq!(parser.parse().unwrap(), expected, "{}", input);
+            assert_eq!(parser.parse().unwrap(), Box::new(expected));
         }
     }
 }

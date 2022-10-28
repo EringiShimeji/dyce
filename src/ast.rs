@@ -1,4 +1,4 @@
-pub type IntegerType = i128;
+use crate::IntegerType;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Node {
