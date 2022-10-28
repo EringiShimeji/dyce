@@ -61,6 +61,8 @@ impl Lexer {
             '-' => TokenKind::Minus,
             '*' => TokenKind::Asterisk,
             '/' => TokenKind::Slash,
+            '(' => TokenKind::LParen,
+            ')' => TokenKind::RParen,
             _ => {
                 if ch.is_digit(10) {
                     return Some(Token::new(TokenKind::Number, self.read_number()));
@@ -81,7 +83,7 @@ mod test {
 
     #[test]
     fn number_tokenize_test() {
-        let inputs = vec!["10", "0"];
+        let inputs = ["10", "0"];
 
         for input in inputs {
             let mut lexer = Lexer::new(input.to_string());
@@ -95,20 +97,48 @@ mod test {
 
     #[test]
     fn arithmetic_expr_tokenize_test() {
-        let tests = vec![(
-            "1+2-3*4/5",
-            vec![
-                Token::new(TokenKind::Number, "1".to_string()),
-                Token::new(TokenKind::Plus, "+".to_string()),
-                Token::new(TokenKind::Number, "2".to_string()),
-                Token::new(TokenKind::Minus, "-".to_string()),
-                Token::new(TokenKind::Number, "3".to_string()),
-                Token::new(TokenKind::Asterisk, "*".to_string()),
-                Token::new(TokenKind::Number, "4".to_string()),
-                Token::new(TokenKind::Slash, "/".to_string()),
-                Token::new(TokenKind::Number, "5".to_string()),
-            ],
-        )];
+        let tests = [
+            (
+                "1+2-3*4/5",
+                vec![
+                    Token::new(TokenKind::Number, "1".to_string()),
+                    Token::new(TokenKind::Plus, "+".to_string()),
+                    Token::new(TokenKind::Number, "2".to_string()),
+                    Token::new(TokenKind::Minus, "-".to_string()),
+                    Token::new(TokenKind::Number, "3".to_string()),
+                    Token::new(TokenKind::Asterisk, "*".to_string()),
+                    Token::new(TokenKind::Number, "4".to_string()),
+                    Token::new(TokenKind::Slash, "/".to_string()),
+                    Token::new(TokenKind::Number, "5".to_string()),
+                ],
+            ),
+            (
+                "(1+2)*(3-4)/(5-(6-7))",
+                vec![
+                    Token::new(TokenKind::LParen, "(".to_string()),
+                    Token::new(TokenKind::Number, "1".to_string()),
+                    Token::new(TokenKind::Plus, "+".to_string()),
+                    Token::new(TokenKind::Number, "2".to_string()),
+                    Token::new(TokenKind::RParen, ")".to_string()),
+                    Token::new(TokenKind::Asterisk, "*".to_string()),
+                    Token::new(TokenKind::LParen, "(".to_string()),
+                    Token::new(TokenKind::Number, "3".to_string()),
+                    Token::new(TokenKind::Minus, "-".to_string()),
+                    Token::new(TokenKind::Number, "4".to_string()),
+                    Token::new(TokenKind::RParen, ")".to_string()),
+                    Token::new(TokenKind::Slash, "/".to_string()),
+                    Token::new(TokenKind::LParen, "(".to_string()),
+                    Token::new(TokenKind::Number, "5".to_string()),
+                    Token::new(TokenKind::Minus, "-".to_string()),
+                    Token::new(TokenKind::LParen, "(".to_string()),
+                    Token::new(TokenKind::Number, "6".to_string()),
+                    Token::new(TokenKind::Minus, "-".to_string()),
+                    Token::new(TokenKind::Number, "7".to_string()),
+                    Token::new(TokenKind::RParen, ")".to_string()),
+                    Token::new(TokenKind::RParen, ")".to_string()),
+                ],
+            ),
+        ];
 
         for (input, expected) in tests {
             let mut lexer = Lexer::new(input.to_string());
