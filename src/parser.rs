@@ -8,25 +8,29 @@ use crate::{
 pub struct Parser {
     lexer: Lexer,
     cur_token: Option<Token>,
-    next_token: Option<Token>,
 }
 impl Parser {
     pub fn new(lexer: Lexer) -> Self {
         let mut parser = Self {
             lexer,
             cur_token: None,
-            next_token: None,
         };
 
-        parser.read_token();
         parser.read_token();
 
         parser
     }
 
     fn read_token(&mut self) {
-        self.cur_token = self.next_token.clone();
-        self.next_token = self.lexer.next_token();
+        self.cur_token = self.lexer.next_token();
+    }
+
+    fn peek(&mut self, expected: TokenKind) -> bool {
+        if let Some(t) = &self.cur_token {
+            t.kind() == expected
+        } else {
+            false
+        }
     }
 
     fn consume(&mut self, expected: TokenKind) -> Option<Token> {
@@ -89,27 +93,62 @@ impl Parser {
         }
     }
 
-    // mul = primary ( "*" primary | "/" primary )*
+    // mul = call ( "*" call | "/" call )*
     fn mul(&mut self) -> Result<Box<Node>, ()> {
-        let mut node = self.primary()?;
+        let mut node = self.call()?;
 
         loop {
             if self.consume(TokenKind::Asterisk).is_some() {
                 node = Box::new(Node::BinaryExpr {
                     kind: BinaryExprKind::Mul,
                     lhs: node,
-                    rhs: self.primary()?,
+                    rhs: self.call()?,
                 })
             } else if self.consume(TokenKind::Slash).is_some() {
                 node = Box::new(Node::BinaryExpr {
                     kind: BinaryExprKind::Div,
                     lhs: node,
-                    rhs: self.primary()?,
+                    rhs: self.call()?,
                 })
             } else {
                 return Ok(node);
             }
         }
+    }
+
+    // call = primary | string | string primary | primary string primary | primary string
+    fn call(&mut self) -> Result<Box<Node>, ()> {
+        // string | string primary
+        if let Some(token) = self.consume(TokenKind::Ident) {
+            let ident = token.literal();
+
+            // string primary
+            if self.peek(TokenKind::Number) || self.peek(TokenKind::LParen) {
+                let rhs = self.primary()?;
+
+                return Ok(Box::new(Node::PrefixCall { ident, rhs }));
+            }
+
+            // string
+            return Ok(Box::new(Node::Variable(ident)));
+        }
+
+        // primary | primary string primary | primary string
+        let lhs = self.primary()?;
+        let ident = match self.consume(TokenKind::Ident) {
+            Some(t) => t.literal(),
+            _ => return Ok(lhs), // primary
+        };
+
+        // primary string primary
+        if self.peek(TokenKind::Number) || self.peek(TokenKind::LParen) {
+            let rhs = self.primary()?;
+
+            return Ok(Box::new(Node::InfixCall { ident, lhs, rhs }));
+        }
+
+        // primary string
+        Ok(Box::new(Node::PostfixCall { ident, lhs }))
     }
 
     // primary = number | "(" expr ")"
@@ -134,6 +173,35 @@ impl Parser {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn call_parse_test() {
+        let tests = [
+            (
+                "1D6",
+                Node::InfixCall {
+                    ident: "D".to_string(),
+                    lhs: Box::new(Node::Integer(1)),
+                    rhs: Box::new(Node::Integer(6)),
+                },
+            ),
+            ("CCB", Node::Variable("CCB".to_string())),
+            (
+                "d6",
+                Node::PrefixCall {
+                    ident: "d".to_string(),
+                    rhs: Box::new(Node::Integer(6)),
+                },
+            ),
+            (
+                "2d",
+                Node::PostfixCall {
+                    ident: "d".to_string(),
+                    lhs: Box::new(Node::Integer(2)),
+                },
+            ),
+        ];
+    }
 
     #[test]
     fn integer_parse_test() {
@@ -211,6 +279,46 @@ mod test {
                         }),
                         rhs: Box::new(Node::Integer(5)),
                     }),
+                },
+            ),
+            (
+                "(1+2)D6",
+                Node::InfixCall {
+                    ident: "D".to_string(),
+                    lhs: Box::new(Node::BinaryExpr {
+                        kind: BinaryExprKind::Add,
+                        lhs: Box::new(Node::Integer(1)),
+                        rhs: Box::new(Node::Integer(2)),
+                    }),
+                    rhs: Box::new(Node::Integer(6)),
+                },
+            ),
+            (
+                "1D(2*(1+2))",
+                Node::InfixCall {
+                    ident: "D".to_string(),
+                    lhs: Box::new(Node::Integer(1)),
+                    rhs: Box::new(Node::BinaryExpr {
+                        kind: BinaryExprKind::Mul,
+                        lhs: Box::new(Node::Integer(2)),
+                        rhs: Box::new(Node::BinaryExpr {
+                            kind: BinaryExprKind::Add,
+                            lhs: Box::new(Node::Integer(1)),
+                            rhs: Box::new(Node::Integer(2)),
+                        }),
+                    }),
+                },
+            ),
+            (
+                "3D6+3",
+                Node::BinaryExpr {
+                    kind: BinaryExprKind::Add,
+                    lhs: Box::new(Node::InfixCall {
+                        ident: "D".to_string(),
+                        lhs: Box::new(Node::Integer(3)),
+                        rhs: Box::new(Node::Integer(6)),
+                    }),
+                    rhs: Box::new(Node::Integer(3)),
                 },
             ),
         ];

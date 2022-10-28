@@ -51,11 +51,26 @@ impl Lexer {
         num
     }
 
+    fn read_ident(&mut self) -> String {
+        let mut ident = String::new();
+
+        while let Some(ch) = self.ch {
+            if !ch.is_ascii_alphabetic() {
+                break;
+            }
+
+            ident.push(ch);
+            self.read_char();
+        }
+
+        ident
+    }
+
     pub fn next_token(&mut self) -> Option<Token> {
         self.skip_whitespace();
 
         let ch = self.ch?;
-        let mut literal = ch.to_string();
+        let literal = ch.to_string();
         let kind = match ch {
             '+' => TokenKind::Plus,
             '-' => TokenKind::Minus,
@@ -66,13 +81,17 @@ impl Lexer {
             _ => {
                 if ch.is_digit(10) {
                     return Some(Token::new(TokenKind::Number, self.read_number()));
-                } else {
-                    TokenKind::Illegal
                 }
+                if ch.is_ascii_alphabetic() {
+                    return Some(Token::new(TokenKind::Ident, self.read_ident()));
+                }
+
+                TokenKind::Illegal
             }
         };
 
         self.read_char();
+
         Some(Token::new(kind, literal))
     }
 }
@@ -80,6 +99,20 @@ impl Lexer {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn ident_tokenize_test() {
+        let inputs = ["D", "CCB", "dx"];
+
+        for input in inputs {
+            let mut lexer = Lexer::new(input.to_string());
+
+            assert_eq!(
+                lexer.next_token().unwrap(),
+                Token::new(TokenKind::Ident, input.to_string())
+            );
+        }
+    }
 
     #[test]
     fn number_tokenize_test() {

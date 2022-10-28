@@ -1,13 +1,14 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TokenKind {
-    Illegal,
-    Number,
-    Plus,
-    Minus,
-    Asterisk,
-    Slash,
-    LParen,
-    RParen,
+    Illegal,  // 解析できないトークン
+    Number,   // 数字
+    Plus,     // +
+    Minus,    // -
+    Asterisk, // *
+    Slash,    // /
+    LParen,   // (
+    RParen,   // )
+    Ident,    // 識別子
 }
 impl Default for TokenKind {
     fn default() -> Self {
