@@ -3,6 +3,7 @@ use crate::IntegerType;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Object {
     Integer(IntegerType),
+    Boolean(bool),
 }
 
 impl std::fmt::Display for Object {
@@ -12,6 +13,7 @@ impl std::fmt::Display for Object {
             "{}",
             match self {
                 Object::Integer(v) => v.to_string(),
+                Object::Boolean(v) => v.to_string(),
             }
         )
     }

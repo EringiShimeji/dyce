@@ -7,6 +7,11 @@ pub enum Node {
         lhs: Box<Node>,
         rhs: Box<Node>,
     },
+    ComparisonExpr {
+        kind: ComparisonExprKind,
+        lhs: Box<Node>,
+        rhs: Box<Node>,
+    },
     Integer(IntegerType),
     Variable(String),
     PrefixCall {
@@ -30,4 +35,14 @@ pub enum BinaryExprKind {
     Sub,
     Mul,
     Div,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ComparisonExprKind {
+    Eq,
+    Ne,
+    Lt,
+    Le,
+    Gt,
+    Ge,
 }

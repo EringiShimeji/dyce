@@ -1,5 +1,5 @@
 use crate::{
-    ast::{BinaryExprKind, Node},
+    ast::{BinaryExprKind, ComparisonExprKind, Node},
     lexer::Lexer,
     token::{Token, TokenKind},
     IntegerType,
@@ -67,7 +67,61 @@ impl Parser {
 
     // expr = add
     fn expr(&mut self) -> Result<Box<Node>, ()> {
-        self.add()
+        self.equality()
+    }
+
+    // equality = relational ( "=" relational | "==" relational | "!=" relational | "<>" relational )
+    fn equality(&mut self) -> Result<Box<Node>, ()> {
+        let mut node = self.relational()?;
+
+        if self.consume(TokenKind::Eq).is_some() {
+            node = Box::new(Node::ComparisonExpr {
+                kind: ComparisonExprKind::Eq,
+                lhs: node,
+                rhs: self.relational()?,
+            })
+        } else if self.consume(TokenKind::Ne).is_some() {
+            node = Box::new(Node::ComparisonExpr {
+                kind: ComparisonExprKind::Ne,
+                lhs: node,
+                rhs: self.relational()?,
+            })
+        }
+
+        Ok(node)
+    }
+
+    // relational = add ( "<" add | "<=" add | ">" add | ">" add )
+    fn relational(&mut self) -> Result<Box<Node>, ()> {
+        let mut node = self.add()?;
+
+        if self.consume(TokenKind::Lt).is_some() {
+            node = Box::new(Node::ComparisonExpr {
+                kind: ComparisonExprKind::Lt,
+                lhs: node,
+                rhs: self.add()?,
+            })
+        } else if self.consume(TokenKind::Le).is_some() {
+            node = Box::new(Node::ComparisonExpr {
+                kind: ComparisonExprKind::Le,
+                lhs: node,
+                rhs: self.add()?,
+            })
+        } else if self.consume(TokenKind::Gt).is_some() {
+            node = Box::new(Node::ComparisonExpr {
+                kind: ComparisonExprKind::Gt,
+                lhs: node,
+                rhs: self.add()?,
+            })
+        } else if self.consume(TokenKind::Ge).is_some() {
+            node = Box::new(Node::ComparisonExpr {
+                kind: ComparisonExprKind::Ge,
+                lhs: node,
+                rhs: self.add()?,
+            })
+        }
+
+        Ok(node)
     }
 
     // add = mul ( "+" mul | "-" mul )*
@@ -319,6 +373,74 @@ mod test {
                         rhs: Box::new(Node::Integer(6)),
                     }),
                     rhs: Box::new(Node::Integer(3)),
+                },
+            ),
+            (
+                "1+2=3",
+                Node::ComparisonExpr {
+                    kind: ComparisonExprKind::Eq,
+                    lhs: Box::new(Node::BinaryExpr {
+                        kind: BinaryExprKind::Add,
+                        lhs: Box::new(Node::Integer(1)),
+                        rhs: Box::new(Node::Integer(2)),
+                    }),
+                    rhs: Box::new(Node::Integer(3)),
+                },
+            ),
+            (
+                "2==2",
+                Node::ComparisonExpr {
+                    kind: ComparisonExprKind::Eq,
+                    lhs: Box::new(Node::Integer(2)),
+                    rhs: Box::new(Node::Integer(2)),
+                },
+            ),
+            (
+                "2!=2",
+                Node::ComparisonExpr {
+                    kind: ComparisonExprKind::Ne,
+                    lhs: Box::new(Node::Integer(2)),
+                    rhs: Box::new(Node::Integer(2)),
+                },
+            ),
+            (
+                "2<>2",
+                Node::ComparisonExpr {
+                    kind: ComparisonExprKind::Ne,
+                    lhs: Box::new(Node::Integer(2)),
+                    rhs: Box::new(Node::Integer(2)),
+                },
+            ),
+            (
+                "10<12",
+                Node::ComparisonExpr {
+                    kind: ComparisonExprKind::Lt,
+                    lhs: Box::new(Node::Integer(10)),
+                    rhs: Box::new(Node::Integer(12)),
+                },
+            ),
+            (
+                "CCB<=100",
+                Node::ComparisonExpr {
+                    kind: ComparisonExprKind::Le,
+                    lhs: Box::new(Node::Variable("CCB".to_string())),
+                    rhs: Box::new(Node::Integer(100)),
+                },
+            ),
+            (
+                "10>12",
+                Node::ComparisonExpr {
+                    kind: ComparisonExprKind::Gt,
+                    lhs: Box::new(Node::Integer(10)),
+                    rhs: Box::new(Node::Integer(12)),
+                },
+            ),
+            (
+                "CCB>=10",
+                Node::ComparisonExpr {
+                    kind: ComparisonExprKind::Ge,
+                    lhs: Box::new(Node::Variable("CCB".to_string())),
+                    rhs: Box::new(Node::Integer(10)),
                 },
             ),
         ];

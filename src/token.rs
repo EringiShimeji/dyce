@@ -6,6 +6,12 @@ pub enum TokenKind {
     Minus,    // -
     Asterisk, // *
     Slash,    // /
+    Eq,       // = ==
+    Ne,       // != <>
+    Lt,       // <
+    Le,       // <=
+    Gt,       // >
+    Ge,       // >=
     LParen,   // (
     RParen,   // )
     Ident,    // 識別子

@@ -26,6 +26,10 @@ impl Lexer {
         self.read_position += 1;
     }
 
+    fn peek_char(&mut self) -> Option<char> {
+        self.input.chars().nth(self.read_position)
+    }
+
     fn skip_whitespace(&mut self) {
         while let Some(ch) = self.ch {
             if !(ch == ' ' || ch == '\n' || ch == '\r' || ch == '\t') {
@@ -70,12 +74,55 @@ impl Lexer {
         self.skip_whitespace();
 
         let ch = self.ch?;
-        let literal = ch.to_string();
+        let mut literal = ch.to_string();
         let kind = match ch {
             '+' => TokenKind::Plus,
             '-' => TokenKind::Minus,
             '*' => TokenKind::Asterisk,
             '/' => TokenKind::Slash,
+            '=' => {
+                if let Some('=') = self.peek_char() {
+                    self.read_char();
+                    literal = "==".to_string();
+                }
+
+                TokenKind::Eq
+            }
+            '!' => {
+                if let Some('=') = self.peek_char() {
+                    self.read_char();
+                    literal = "!=".to_string();
+
+                    TokenKind::Ne
+                } else {
+                    TokenKind::Illegal
+                }
+            }
+            '<' => {
+                if let Some('=') = self.peek_char() {
+                    self.read_char();
+                    literal = "<=".to_string();
+
+                    TokenKind::Le
+                } else if let Some('>') = self.peek_char() {
+                    self.read_char();
+                    literal = "<>".to_string();
+
+                    TokenKind::Ne
+                } else {
+                    TokenKind::Lt
+                }
+            }
+            '>' => {
+                if let Some('=') = self.peek_char() {
+                    self.read_char();
+                    literal = ">=".to_string();
+
+                    TokenKind::Ge
+                } else {
+                    TokenKind::Gt
+                }
+            }
             '(' => TokenKind::LParen,
             ')' => TokenKind::RParen,
             _ => {
@@ -169,6 +216,94 @@ mod test {
                     Token::new(TokenKind::Number, "7".to_string()),
                     Token::new(TokenKind::RParen, ")".to_string()),
                     Token::new(TokenKind::RParen, ")".to_string()),
+                ],
+            ),
+            (
+                "1+2<10",
+                vec![
+                    Token::new(TokenKind::Number, "1".to_string()),
+                    Token::new(TokenKind::Plus, "+".to_string()),
+                    Token::new(TokenKind::Number, "2".to_string()),
+                    Token::new(TokenKind::Lt, "<".to_string()),
+                    Token::new(TokenKind::Number, "10".to_string()),
+                ],
+            ),
+            (
+                "1+2<=10",
+                vec![
+                    Token::new(TokenKind::Number, "1".to_string()),
+                    Token::new(TokenKind::Plus, "+".to_string()),
+                    Token::new(TokenKind::Number, "2".to_string()),
+                    Token::new(TokenKind::Le, "<=".to_string()),
+                    Token::new(TokenKind::Number, "10".to_string()),
+                ],
+            ),
+            (
+                "1+2<>10",
+                vec![
+                    Token::new(TokenKind::Number, "1".to_string()),
+                    Token::new(TokenKind::Plus, "+".to_string()),
+                    Token::new(TokenKind::Number, "2".to_string()),
+                    Token::new(TokenKind::Ne, "<>".to_string()),
+                    Token::new(TokenKind::Number, "10".to_string()),
+                ],
+            ),
+            (
+                "1+2>10",
+                vec![
+                    Token::new(TokenKind::Number, "1".to_string()),
+                    Token::new(TokenKind::Plus, "+".to_string()),
+                    Token::new(TokenKind::Number, "2".to_string()),
+                    Token::new(TokenKind::Gt, ">".to_string()),
+                    Token::new(TokenKind::Number, "10".to_string()),
+                ],
+            ),
+            (
+                "1+2>=10",
+                vec![
+                    Token::new(TokenKind::Number, "1".to_string()),
+                    Token::new(TokenKind::Plus, "+".to_string()),
+                    Token::new(TokenKind::Number, "2".to_string()),
+                    Token::new(TokenKind::Ge, ">=".to_string()),
+                    Token::new(TokenKind::Number, "10".to_string()),
+                ],
+            ),
+            (
+                "1+2==10",
+                vec![
+                    Token::new(TokenKind::Number, "1".to_string()),
+                    Token::new(TokenKind::Plus, "+".to_string()),
+                    Token::new(TokenKind::Number, "2".to_string()),
+                    Token::new(TokenKind::Eq, "==".to_string()),
+                    Token::new(TokenKind::Number, "10".to_string()),
+                ],
+            ),
+            (
+                "1+2!=10",
+                vec![
+                    Token::new(TokenKind::Number, "1".to_string()),
+                    Token::new(TokenKind::Plus, "+".to_string()),
+                    Token::new(TokenKind::Number, "2".to_string()),
+                    Token::new(TokenKind::Ne, "!=".to_string()),
+                    Token::new(TokenKind::Number, "10".to_string()),
+                ],
+            ),
+            (
+                "1+2=10",
+                vec![
+                    Token::new(TokenKind::Number, "1".to_string()),
+                    Token::new(TokenKind::Plus, "+".to_string()),
+                    Token::new(TokenKind::Number, "2".to_string()),
+                    Token::new(TokenKind::Eq, "=".to_string()),
+                    Token::new(TokenKind::Number, "10".to_string()),
+                ],
+            ),
+            (
+                "CCB<=50",
+                vec![
+                    Token::new(TokenKind::Ident, "CCB".to_string()),
+                    Token::new(TokenKind::Le, "<=".to_string()),
+                    Token::new(TokenKind::Number, "50".to_string()),
                 ],
             ),
         ];
