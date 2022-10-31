@@ -255,6 +255,13 @@ mod test {
                 },
             ),
         ];
+
+        for (input, expected) in tests {
+            let lexer = Lexer::new(input.to_string());
+            let mut parser = Parser::new(lexer);
+
+            assert_eq!(parser.parse().unwrap(), Box::new(expected));
+        }
     }
 
     #[test]
