@@ -1,4 +1,4 @@
-use crate::ast::Node;
+use crate::{ast::Node, eval::eval, object::Object};
 use std::collections::HashMap;
 
 #[derive(Clone)]
@@ -56,5 +56,22 @@ impl Function {
 
     pub fn parameters(&self) -> Vec<String> {
         self.parameters.clone()
+    }
+
+    pub fn eval(&self, env: &Environment, parameters: Vec<Box<Node>>) -> Result<Object, ()> {
+        if parameters.len() != self.parameters.len() {
+            return Err(());
+        }
+
+        let mut env = env.clone();
+
+        for (i, param) in parameters.into_iter().enumerate() {
+            env.insert(
+                FunctionForm::new(self.parameters[i].to_string(), FunctionKind::Nullary),
+                Function::new(param, Vec::new()),
+            );
+        }
+
+        eval(self.node(), &env)
     }
 }
