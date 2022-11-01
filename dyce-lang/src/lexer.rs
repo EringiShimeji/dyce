@@ -87,12 +87,19 @@ impl Lexer {
             '*' => TokenKind::Asterisk,
             '/' => TokenKind::Slash,
             '=' => {
-                if let Some('=') = self.peek_char() {
+                if let Some('>') = self.peek_char() {
                     self.read_char();
-                    literal = "==".to_string();
-                }
+                    literal = "=>".to_string();
 
-                TokenKind::Eq
+                    TokenKind::Arrow
+                } else {
+                    if let Some('=') = self.peek_char() {
+                        self.read_char();
+                        literal = "==".to_string();
+                    }
+
+                    TokenKind::Eq
+                }
             }
             '!' => {
                 if let Some('=') = self.peek_char() {
@@ -129,6 +136,8 @@ impl Lexer {
                     TokenKind::Gt
                 }
             }
+            ',' => TokenKind::Comma,
+            '"' => TokenKind::DoubleQuote,
             '(' => TokenKind::LParen,
             ')' => TokenKind::RParen,
             '\n' => {
@@ -157,6 +166,39 @@ impl Lexer {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn def_tokenize_test() {
+        let tests = [
+            (
+                "CCB => 1D100",
+                vec![
+                    Token::new(TokenKind::Ident, "CCB".to_string()),
+                    Token::new(TokenKind::Arrow, "=>".to_string()),
+                    Token::new(TokenKind::Number, "1".to_string()),
+                    Token::new(TokenKind::Ident, "D".to_string()),
+                    Token::new(TokenKind::Number, "100".to_string()),
+                ],
+            ),
+            (
+                r#"n"D"m => rand(n, m)"#,
+                vec![
+                    Token::new(TokenKind::Ident, "n".to_string()),
+                    Token::new(TokenKind::DoubleQuote, '"'.to_string()),
+                    Token::new(TokenKind::Ident, "D".to_string()),
+                    Token::new(TokenKind::DoubleQuote, '"'.to_string()),
+                    Token::new(TokenKind::Ident, "m".to_string()),
+                    Token::new(TokenKind::Arrow, "=>".to_string()),
+                    Token::new(TokenKind::Ident, "rand".to_string()),
+                    Token::new(TokenKind::LParen, "(".to_string()),
+                    Token::new(TokenKind::Ident, "n".to_string()),
+                    Token::new(TokenKind::Comma, ",".to_string()),
+                    Token::new(TokenKind::Ident, "m".to_string()),
+                    Token::new(TokenKind::RParen, ")".to_string()),
+                ],
+            ),
+        ];
+    }
 
     #[test]
     fn separator_tokenize_test() {

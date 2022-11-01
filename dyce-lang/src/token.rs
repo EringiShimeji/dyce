@@ -1,21 +1,24 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TokenKind {
-    Illegal,   // 解析できないトークン
-    Number,    // 数字
-    Plus,      // +
-    Minus,     // -
-    Asterisk,  // *
-    Slash,     // /
-    Eq,        // = ==
-    Ne,        // != <>
-    Lt,        // <
-    Le,        // <=
-    Gt,        // >
-    Ge,        // >=
-    LParen,    // (
-    RParen,    // )
-    Ident,     // 識別子
-    Separator, // 定義を区切るための改行群
+    Illegal,     // 解析できないトークン
+    Number,      // 数字
+    Plus,        // +
+    Minus,       // -
+    Asterisk,    // *
+    Slash,       // /
+    Eq,          // = ==
+    Ne,          // != <>
+    Lt,          // <
+    Le,          // <=
+    Gt,          // >
+    Ge,          // >=
+    Comma,       // ,
+    DoubleQuote, // "
+    LParen,      // (
+    RParen,      // )
+    Ident,       // 識別子
+    Separator,   // 定義を区切るための改行群
+    Arrow,       // =>
 }
 impl Default for TokenKind {
     fn default() -> Self {
