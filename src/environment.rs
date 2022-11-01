@@ -1,4 +1,4 @@
-use crate::{ast::Node, object::Object};
+use crate::ast::Node;
 use std::collections::HashMap;
 
 #[derive(Clone)]
