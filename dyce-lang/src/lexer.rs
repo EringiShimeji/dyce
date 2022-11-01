@@ -32,10 +32,16 @@ impl Lexer {
 
     fn skip_whitespace(&mut self) {
         while let Some(ch) = self.ch {
-            if !(ch == ' ' || ch == '\n' || ch == '\r' || ch == '\t') {
+            if !(ch == ' ' || ch == '\r' || ch == '\t') {
                 break;
             }
 
+            self.read_char();
+        }
+    }
+
+    fn read_newlines(&mut self) {
+        while let Some('\n') = self.ch {
             self.read_char();
         }
     }
@@ -125,6 +131,11 @@ impl Lexer {
             }
             '(' => TokenKind::LParen,
             ')' => TokenKind::RParen,
+            '\n' => {
+                self.read_newlines();
+
+                return Some(Token::new(TokenKind::Separator, literal));
+            }
             _ => {
                 if ch.is_digit(10) {
                     return Some(Token::new(TokenKind::Number, self.read_number()));
@@ -146,6 +157,26 @@ impl Lexer {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn separator_tokenize_test() {
+        let tests = [(
+            "1\n2",
+            vec![
+                Token::new(TokenKind::Number, "1".to_string()),
+                Token::new(TokenKind::Separator, "\n".to_string()),
+                Token::new(TokenKind::Number, "2".to_string()),
+            ],
+        )];
+
+        for (input, expected) in tests {
+            let mut lexer = Lexer::new(input.to_string());
+
+            for token in expected {
+                assert_eq!(lexer.next_token().unwrap(), token);
+            }
+        }
+    }
 
     #[test]
     fn ident_tokenize_test() {
