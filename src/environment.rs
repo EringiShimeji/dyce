@@ -50,14 +50,6 @@ impl Function {
         Self { node, parameters }
     }
 
-    pub fn node(&self) -> Box<Node> {
-        self.node.clone()
-    }
-
-    pub fn parameters(&self) -> Vec<String> {
-        self.parameters.clone()
-    }
-
     pub fn eval(&self, env: &Environment, parameters: Vec<Box<Node>>) -> Result<Object, ()> {
         if parameters.len() != self.parameters.len() {
             return Err(());
@@ -72,6 +64,6 @@ impl Function {
             );
         }
 
-        eval(self.node(), &env)
+        eval(self.node.clone(), &env)
     }
 }

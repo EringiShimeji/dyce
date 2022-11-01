@@ -1,6 +1,6 @@
 use crate::{
     ast::{BinaryExprKind, ComparisonExprKind, Node},
-    environment::{Environment, Function, FunctionForm, FunctionKind},
+    environment::{Environment, FunctionForm, FunctionKind},
     object::Object,
 };
 
@@ -98,7 +98,7 @@ pub fn eval(node: Box<Node>, env: &Environment) -> Result<Object, ()> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{lexer::Lexer, parser::Parser, IntegerType};
+    use crate::{environment::Function, lexer::Lexer, parser::Parser, IntegerType};
 
     #[test]
     fn nullary_call_eval_test() {
