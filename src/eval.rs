@@ -61,35 +61,31 @@ pub fn eval(node: Box<Node>, env: &Environment) -> Result<Object, ()> {
     }
 
     if let Node::NullaryCall(name) = *node {
-        let f = env
-            .get(&FunctionForm::new(name.clone(), FunctionKind::Nullary))
-            .ok_or(())?;
-
-        return f.eval(env, Vec::new());
+        return env.get_and_eval(
+            &FunctionForm::new(name.clone(), FunctionKind::Nullary),
+            Vec::new(),
+        );
     }
 
     if let Node::PrefixCall { ident, rhs } = *node {
-        let f = env
-            .get(&FunctionForm::new(ident.clone(), FunctionKind::Prefix))
-            .ok_or(())?;
-
-        return f.eval(env, vec![rhs]);
+        return env.get_and_eval(
+            &FunctionForm::new(ident.clone(), FunctionKind::Prefix),
+            vec![rhs],
+        );
     }
 
     if let Node::InfixCall { ident, lhs, rhs } = *node {
-        let f = env
-            .get(&FunctionForm::new(ident.clone(), FunctionKind::Infix))
-            .ok_or(())?;
-
-        return f.eval(env, vec![lhs, rhs]);
+        return env.get_and_eval(
+            &FunctionForm::new(ident.clone(), FunctionKind::Infix),
+            vec![lhs, rhs],
+        );
     }
 
     if let Node::PostfixCall { ident, lhs } = *node {
-        let f = env
-            .get(&FunctionForm::new(ident.clone(), FunctionKind::Postfix))
-            .ok_or(())?;
-
-        return f.eval(env, vec![lhs]);
+        return env.get_and_eval(
+            &FunctionForm::new(ident.clone(), FunctionKind::Postfix),
+            vec![lhs],
+        );
     }
 
     Err(())

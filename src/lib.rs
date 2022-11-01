@@ -1,6 +1,7 @@
 type IntegerType = i128;
 
 mod ast;
+mod builtin;
 mod environment;
 mod eval;
 mod lexer;

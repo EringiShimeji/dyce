@@ -1,4 +1,4 @@
-use crate::{ast::Node, eval::eval, object::Object};
+use crate::{ast::Node, builtin::eval_builtin, eval::eval, object::Object};
 use std::collections::HashMap;
 
 #[derive(Clone)]
@@ -12,8 +12,16 @@ impl Environment {
         }
     }
 
-    pub fn get(&self, key: &FunctionForm) -> Option<&Function> {
-        self.store.get(key)
+    pub fn get_and_eval(
+        &self,
+        key: &FunctionForm,
+        parameters: Vec<Box<Node>>,
+    ) -> Result<Object, ()> {
+        if let Some(o) = eval_builtin(key, parameters.clone(), self) {
+            return Ok(o);
+        }
+
+        self.store.get(key).ok_or(())?.eval(parameters, self)
     }
 
     pub fn insert(&mut self, key: FunctionForm, value: Function) -> Option<Function> {
@@ -38,6 +46,13 @@ impl FunctionForm {
     pub fn new(name: String, kind: FunctionKind) -> Self {
         Self { name, kind }
     }
+
+    pub fn name(&self) -> &str {
+        self.name.as_str()
+    }
+    pub fn kind(&self) -> &FunctionKind {
+        &self.kind
+    }
 }
 
 #[derive(Clone)]
@@ -50,7 +65,7 @@ impl Function {
         Self { node, parameters }
     }
 
-    pub fn eval(&self, env: &Environment, parameters: Vec<Box<Node>>) -> Result<Object, ()> {
+    pub fn eval(&self, parameters: Vec<Box<Node>>, env: &Environment) -> Result<Object, ()> {
         if parameters.len() != self.parameters.len() {
             return Err(());
         }
