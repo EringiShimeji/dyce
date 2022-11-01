@@ -1,6 +1,5 @@
-use std::io::{stdin, stdout, Write};
-
 use crate::{environment::Environment, eval::eval, lexer::Lexer, parser::Parser};
+use std::io::{stdin, stdout, Write};
 
 const PROMPT: &'static str = ">> ";
 
