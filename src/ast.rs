@@ -13,7 +13,7 @@ pub enum Node {
         rhs: Box<Node>,
     },
     Integer(IntegerType),
-    Variable(String),
+    NullaryCall(String),
     PrefixCall {
         ident: String,
         rhs: Box<Node>,

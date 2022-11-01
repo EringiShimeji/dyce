@@ -1,6 +1,6 @@
 use std::io::{stdin, stdout, Write};
 
-use crate::{eval::eval, lexer::Lexer, parser::Parser};
+use crate::{environment::Environment, eval::eval, lexer::Lexer, parser::Parser};
 
 const PROMPT: &'static str = ">> ";
 
@@ -19,7 +19,7 @@ pub fn start() {
             Ok(n) => n,
             _ => continue,
         };
-        let result = match eval(node) {
+        let result = match eval(node, &Environment::new()) {
             Ok(n) => n,
             _ => continue,
         };

@@ -184,7 +184,7 @@ impl Parser {
             }
 
             // string
-            return Ok(Box::new(Node::Variable(ident)));
+            return Ok(Box::new(Node::NullaryCall(ident)));
         }
 
         // primary | primary string primary | primary string
@@ -239,7 +239,7 @@ mod test {
                     rhs: Box::new(Node::Integer(6)),
                 },
             ),
-            ("CCB", Node::Variable("CCB".to_string())),
+            ("CCB", Node::NullaryCall("CCB".to_string())),
             (
                 "d6",
                 Node::PrefixCall {
@@ -430,7 +430,7 @@ mod test {
                 "CCB<=100",
                 Node::ComparisonExpr {
                     kind: ComparisonExprKind::Le,
-                    lhs: Box::new(Node::Variable("CCB".to_string())),
+                    lhs: Box::new(Node::NullaryCall("CCB".to_string())),
                     rhs: Box::new(Node::Integer(100)),
                 },
             ),
@@ -446,7 +446,7 @@ mod test {
                 "CCB>=10",
                 Node::ComparisonExpr {
                     kind: ComparisonExprKind::Ge,
-                    lhs: Box::new(Node::Variable("CCB".to_string())),
+                    lhs: Box::new(Node::NullaryCall("CCB".to_string())),
                     rhs: Box::new(Node::Integer(10)),
                 },
             ),
